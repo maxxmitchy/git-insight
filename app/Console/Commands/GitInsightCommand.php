@@ -10,10 +10,13 @@ use App\Formatters\InsightFormatter;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Symfony\Component\Process\Process;
+use Carbon\Carbon;
 
 class GitInsightCommand extends Command
 {
-    protected $signature = 'git-insight:analyze {path : Path or URL of the Git repository} {--timeout=300 : Maximum execution time in seconds}';
+    protected $signature = 'git-insight:analyze {path : Path or URL of the Git repository}
+                            {--timeout=300 : Maximum execution time in seconds}
+                            {--output=insight_report : Output file name (without extension)}';
     protected $description = 'Analyze a Git repository and provide insights';
 
     public function __construct(
@@ -30,6 +33,7 @@ class GitInsightCommand extends Command
     {
         $path = $this->argument('path');
         $timeout = $this->option('timeout');
+        $outputFileName = $this->option('output');
 
         try {
             $repositoryPath = $this->getRepositoryPath($path, $timeout);
@@ -40,11 +44,15 @@ class GitInsightCommand extends Command
             $codeQualityInsights = $this->codeQualityAnalysis->analyze($repository);
             $collaborationInsights = $this->collaborationAnalysis->analyze($repository);
 
-            $this->output->write($this->formatter->format([
+            $formattedInsights = $this->formatter->format([
                 'commits' => $commitInsights,
                 'codeQuality' => $codeQualityInsights,
                 'collaboration' => $collaborationInsights,
-            ]));
+            ]);
+
+            $this->output->write($formattedInsights);
+
+            $this->saveInsightsToFile($formattedInsights, $outputFileName);
 
             // Clean up temporary directory if it was created
             if ($repositoryPath !== $path) {
@@ -83,5 +91,15 @@ class GitInsightCommand extends Command
         }
 
         return $path;
+    }
+
+    private function saveInsightsToFile(string $insights, string $fileName): void
+    {
+        $timestamp = Carbon::now()->format('Y-m-d_H-i-s');
+        $filePath = base_path("{$fileName}_{$timestamp}.txt");
+
+        File::put($filePath, $insights);
+
+        $this->info("Insights saved to: $filePath");
     }
 }
