@@ -71,6 +71,8 @@ The tool will provide a detailed analysis including:
 - Code quality metrics (file count, lines of code, complexity score)
 - Collaboration insights (collaboration score, top collaborating pairs)
 
+The analysis results will be displayed in the console and saved to a file in the project root directory with the specified name (or default 'insight_report') and a timestamp.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
